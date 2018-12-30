@@ -3,7 +3,7 @@ import Vuex from 'vuex'
 import axios from 'axios'
 
 Vue.use(Vuex)
-const BASEURL = 'http://localhost:3020';
+const BASEURL = 'https://jmrsquared.com/api/jmrtupperware/live';
 export default new Vuex.Store({
   state: {
     tupperwares: [],

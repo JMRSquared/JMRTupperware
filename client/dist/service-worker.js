@@ -14,7 +14,7 @@
 importScripts("https://storage.googleapis.com/workbox-cdn/releases/3.6.3/workbox-sw.js");
 
 importScripts(
-  "/precache-manifest.f55e7944618bea8999e3927b0c8f92ca.js"
+  "/precache-manifest.28aa4672dd968454cc15797b179bdedb.js"
 );
 
 workbox.core.setCacheNameDetails({prefix: "jmr-tupperware"});
