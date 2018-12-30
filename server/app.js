@@ -38,7 +38,7 @@ app.use(function (req, res, next) {
 });
 
 mongoose
-    .connect("mongodb://68.66.193.181:27017/JMRTupperwareTEST?authSource=admin", {
+    .connect("mongodb://localhost:27017/JMRTupperwareTEST?authSource=admin", {
         auth: {
             user: "admin",
             password: "Mulavhelesi@1"
