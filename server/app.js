@@ -6,6 +6,7 @@ var cookieParser = require("cookie-parser");
 var bodyParser = require("body-parser");
 
 var app = express();
+require('dotenv').load();
 
 import mongoose, {
     mongo
@@ -48,6 +49,7 @@ mongoose
         dbName: "JMRTupperwareTEST"
     })
     .then(answer => {
+        console.log("Send sms ? " + process.env.ENABLE_SEND_SMS);
         console.log("Successfully connected to MONGO!");
     });
 

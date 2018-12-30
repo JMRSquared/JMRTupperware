@@ -7,6 +7,7 @@ import Admin from "../models/Admin";
 import Customer from "../models/Customer";
 import Order from "../models/Order";
 import Tupperware from "../models/Tupperware";
+import SMSProvider from '../services/SMSProvider'
 
 /*
   TODO : Add admin
@@ -16,7 +17,7 @@ import Tupperware from "../models/Tupperware";
                 - Notifications sent
                 - 
 */
-
+const SMS = new SMSProvider();
 router.get("/get/tupperware/:take/:skip", function (req, res) {
   var take = Number(req.params.take);
   var skip = Number(req.params.skip);
@@ -38,26 +39,42 @@ router.post("/add/new/tupperware", function (req, res) {
   tupperware.price = _tupperware.price;
   tupperware.quantity = _tupperware.quantity;
   tupperware.img = _tupperware.img;
-
-  Tupperware.findOne({
-    name: tupperware.name,
-    img: tupperware.img
-  }).then(tt => {
-    if (!tt) return true;
-    throw "Tupperware already exist.";
-  }).then(tt => {
-    tupperware.save(function (err) {
-      if (err) throw "Unable to save the tupperware, try again later.";
-      return res.json(tupperware);
+  Tupperware.findById(_tupperware._id).then(exists => {
+    if (!exists) {
+      throw "Does not exist";
+    } else {
+      exists.name = _tupperware.name;
+      exists.price = _tupperware.price;
+      exists.quantity = _tupperware.quantity;
+      exists.img = _tupperware.img;
+      exists.save(function (err) {
+        if (err) throw "Unable to save the tupperware, try again later.";
+        return res.json(exists);
+      });
+    }
+  }).catch(er => {
+    Tupperware.findOne({
+      name: tupperware.name,
+      img: tupperware.img
+    }).then(tt => {
+      if (!tt) return true;
+      throw "Tupperware already exist.";
+    }).then(tt => {
+      tupperware.save(function (err) {
+        if (err) throw "Unable to save the tupperware, try again later.";
+        return res.json(tupperware);
+      });
+    }).catch(err => {
+      return res.status(512).send(err.message);
     });
-  }).catch(err => {
-    return res.status(512).send(err.message);
   });
+
 });
 
 router.post("/place/order", function (req, res) {
   var user = req.body.user;
   var tupperwareID = req.body.tupperwareID;
+
   if (!user) {
     return res.status(512).send("Please place an order as a user");
   } else if (!user.lastName || user.lastName.length < 3) {
@@ -74,32 +91,42 @@ router.post("/place/order", function (req, res) {
     );
   }
 
+  console.log(user)
+  console.log(tupperwareID)
   Customer.findOne({
     lastName: user.lastName.toLowerCase(),
     firstName: user.firstName.toLowerCase(),
     numbers: user.numbers
-  }).then(user => {
-    if (!user) {
+  }).then(async u => {
+    if (!u) {
       const customer = new Customer();
+      customer._id = mongoose.Types.ObjectId();
       customer.lastName = user.lastName.toLowerCase();
       customer.firstName = user.firstName.toLowerCase();
       customer.numbers = user.numbers;
 
-      customer.save(function (err) {
-        if (err) throw "Unable to save your details, try again later.";
-        return customer;
-      });
+      var saved = await customer.save();
+      if (!saved) throw "Unable to save your details, try again later."
+      return customer;
     } else {
-      return user;
+      return u;
     }
   }).then(customer => {
+    console.log("customer", customer);
     var order = new Order();
+    order._id = mongoose.Types.ObjectId();
     order.customer = customer._id;
     order.tupperwares = [tupperwareID];
     order.message = user.message;
     order.save(function (err) {
-      if (err) throw "Unable to process your order, try again later.";
-      return res.send("Tupperware successfully ordered");
+      if (err) throw err;
+      SMS.sendSMS('+27760487292',
+        `Hellow , my name is ${customer.lastName} ${customer.firstName} and i would like to order a tupperware , ${tupperwareID} .... please get back to me on ${customer.numbers}`
+      ).then(results => {
+        return res.send(results);
+      }).catch(err => {
+        return res.status(512).send(err.message);
+      });
     })
   }).catch(err => {
     return res.status(512).send(err.message);
